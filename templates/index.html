@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseResource — Resource Management & Timesheet Hub</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/styles.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md pointer-events-none"></div>
+
+  <!-- Global Modal Container -->
+  <div id="global-modal" class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div id="global-modal-content" class="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto border border-slate-100 fade-in">
+      <!-- Injected dynamically -->
+    </div>
+  </div>
+
+  <!-- App Wrapper -->
+  <div class="flex-1 flex flex-col md:flex-row min-h-screen">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-white border-r border-slate-200/80 p-5 flex flex-col justify-between flex-shrink-0">
+      <div class="space-y-6">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-2">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+            <i data-lucide="layers" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-base font-black tracking-tight text-slate-900 flex items-center gap-1">
+              Pulse<span class="text-blue-600">Resource</span>
+            </h1>
+            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Enterprise Hub</p>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="space-y-1.5 pt-2">
+          <a href="#dashboard" data-tab="dashboard" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span>Overview</span>
+          </a>
+
+          <a href="#resources" data-tab="resources" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Resources & Heatmap</span>
+          </a>
+
+          <a href="#timesheets" data-tab="timesheets" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            <i data-lucide="calendar" class="w-4 h-4"></i>
+            <span>My Timesheet</span>
+          </a>
+
+          <a href="#approvals" data-tab="approvals" class="nav-link flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            <div class="flex items-center gap-3">
+              <i data-lucide="check-square" class="w-4 h-4"></i>
+              <span>Approvals</span>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          </a>
+
+          <a href="#projects" data-tab="projects" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+            <span>Projects & Tasks</span>
+          </a>
+
+          <a href="#reports" data-tab="reports" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">
+            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+            <span>Analytics & Margins</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Quick Role Switcher Widget in Sidebar Bottom -->
+      <div class="pt-6 border-t border-slate-100 space-y-3">
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/60">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Viewing As Role</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-bold">Simulator</span>
+          </div>
+
+          <select id="user-switcher-select" onchange="App.onUserSwitched(this.value)" class="w-full text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-xl px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <!-- Populated via API -->
+          </select>
+        </div>
+
+        <div class="text-[11px] text-slate-400 text-center">
+          PulseResource v1.0.0
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0">
+      
+      <!-- Top Navigation Bar -->
+      <header class="bg-white border-b border-slate-200/80 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-30">
+        <div>
+          <h2 id="page-header-title" class="text-xl font-black text-slate-900 tracking-tight">Executive Overview</h2>
+          <p id="page-header-sub" class="text-xs text-slate-400 mt-0.5">Team capacity, active projects, and workflow metrics</p>
+        </div>
+
+        <!-- Top Right Controls -->
+        <div class="flex items-center gap-3">
+          
+          <!-- Live Timer Display in Header -->
+          <div onclick="App.navigate('timesheets')" class="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl flex items-center gap-2 transition">
+            <span id="global-timer-dot" class="w-2 h-2 rounded-full bg-emerald-500 timer-pulse-dot hidden"></span>
+            <i data-lucide="timer" class="w-4 h-4 text-slate-500"></i>
+            <span id="global-timer-display" class="font-mono text-xs font-bold text-slate-700">00:00:00</span>
+          </div>
+
+          <!-- User Profile Badge -->
+          <div class="flex items-center gap-3 pl-2 border-l border-slate-200">
+            <img id="current-user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="w-9 h-9 rounded-full object-cover border border-slate-200" alt="User">
+            <div class="hidden lg:block text-left">
+              <span id="current-user-name" class="font-bold text-slate-800 text-xs block">Elena Rostova</span>
+              <span id="current-user-role" class="text-[10px] text-slate-400 block font-medium">Senior Engineer (EMPLOYEE)</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main View Content -->
+      <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+        <div id="main-content-view">
+          <!-- Dynamically Rendered by Router -->
+        </div>
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Component Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/store.js"></script>
+  <script src="/static/js/components/dashboard.js"></script>
+  <script src="/static/js/components/resources.js"></script>
+  <script src="/static/js/components/timesheets.js"></script>
+  <script src="/static/js/components/approvals.js"></script>
+  <script src="/static/js/components/projects.js"></script>
+  <script src="/static/js/components/reports.js"></script>
+  <script src="/static/js/app.js"></script>
+
+</body>
+</html>
